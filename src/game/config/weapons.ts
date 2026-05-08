@@ -5,7 +5,6 @@ export const defaultWeapon: WeaponConfig = {
   damage: 25,
   fireRate: 115,
   magazineSize: 30,
-  reserveAmmo: 120,
   reloadTime: 1250,
   hipFireSpread: 0.012,
   adsSpread: 0.0025,

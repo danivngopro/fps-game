@@ -17,10 +17,13 @@ export function WeaponViewModel() {
   const isAiming = useGameStore((state) => state.isAiming);
   const isReloading = useGameStore((state) => state.isReloading);
   const showMuzzleFlash = useGameStore((state) => state.showMuzzleFlash);
+  const cameraMode = useGameStore((state) => state.cameraMode);
 
   useFrame((state, delta) => {
     const group = groupRef.current;
     if (!group) return;
+    group.visible = cameraMode === "firstPerson";
+    if (cameraMode !== "firstPerson") return;
 
     const targetOffset = isAiming ? adsOffset : hipOffset;
     offsetRef.current.lerp(targetOffset, 1 - Math.exp(-delta * 14));
@@ -49,7 +52,7 @@ export function WeaponViewModel() {
   });
 
   return (
-    <group ref={groupRef} renderOrder={10}>
+    <group ref={groupRef} renderOrder={10} visible={cameraMode === "firstPerson"}>
       <mesh position={[-0.18, -0.08, 0.1]} castShadow={false}>
         <boxGeometry args={[0.12, 0.12, 0.42]} />
         <meshStandardMaterial color="#d7a47f" depthTest={false} />

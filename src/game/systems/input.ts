@@ -46,11 +46,17 @@ export class InputManager {
       e.preventDefault();
       useGameStore.getState().toggleDebug();
     }
+    if (key === "v" && !e.repeat) {
+      useGameStore.getState().toggleCameraMode();
+    }
     if (key === "w") this.state.forward = true;
     if (key === "s") this.state.backward = true;
     if (key === "a") this.state.left = true;
     if (key === "d") this.state.right = true;
-    if (key === "control") this.state.crouch = true;
+    if (key === "shift") {
+      this.state.crouch = true;
+      e.preventDefault();
+    }
     if (key === "r") this.state.reload = true;
     if (key === " ") {
       this.state.jump = true;
@@ -64,7 +70,7 @@ export class InputManager {
     if (key === "s") this.state.backward = false;
     if (key === "a") this.state.left = false;
     if (key === "d") this.state.right = false;
-    if (key === "control") this.state.crouch = false;
+    if (key === "shift") this.state.crouch = false;
     if (key === "r") this.state.reload = false;
     if (key === " ") this.state.jump = false;
   }

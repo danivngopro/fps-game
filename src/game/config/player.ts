@@ -37,4 +37,11 @@ export const playerConfig = {
   footstepMinInterval: 180,
   debugUpdateInterval: 100,
   boundsResetPadding: 4,
+  initialYaw: 0,
+  initialPitch: 0,
+  thirdPersonDistance: 5.2,
+  thirdPersonHeight: 1.25,
+  thirdPersonMinDistance: 1.2,
+  thirdPersonCameraLerpSpeed: 14,
+  thirdPersonCollisionPadding: 0.28,
 };

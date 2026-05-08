@@ -81,13 +81,15 @@ export function PlayerController({
   const wasGroundedRef = useRef(false);
   const bunnyhopGraceActiveRef = useRef(false);
   const isCrouchedRef = useRef(false);
+  const yawRef = useRef(playerConfig.initialYaw);
+  const pitchRef = useRef(playerConfig.initialPitch);
+  const thirdPersonPositionRef = useRef(new THREE.Vector3());
   const velocityRef = useRef(new THREE.Vector3());
   const horizontalVelocityRef = useRef(new THREE.Vector3());
   const currentEyeHeightRef = useRef(playerConfig.standingEyeHeight);
   const lastFootstepTimeRef = useRef(0);
   const lastDebugTimeRef = useRef(0);
   const [isColliderCrouched, setIsColliderCrouched] = useState(false);
-  const [euler] = useState(new THREE.Euler(0, 0, 0, "YXZ"));
   const {
     consumeAmmo,
     addScore,
@@ -95,6 +97,7 @@ export function PlayerController({
     gameStarted,
     ammo,
     isReloading,
+    cameraMode,
     setReloading,
     setAiming,
     setShowMuzzleFlash,
@@ -121,7 +124,6 @@ export function PlayerController({
   const startReload = useCallback(() => {
     const state = useGameStore.getState();
     if (state.isReloading || state.ammo >= state.magazineSize) return;
-    if (state.reserveAmmo <= 0) return;
 
     setReloading(true);
     gameAudio.play("reload");
@@ -138,6 +140,9 @@ export function PlayerController({
 
   useEffect(() => {
     cameraRef.current = camera;
+    camera.quaternion.setFromEuler(
+      new THREE.Euler(playerConfig.initialPitch, playerConfig.initialYaw, 0, "YXZ"),
+    );
   }, [camera]);
 
   useEffect(() => {
@@ -165,22 +170,22 @@ export function PlayerController({
     const handleMouseMove = (event: MouseEvent) => {
       if (!inputManagerRef.current?.isPointerLocked()) return;
 
-      const activeCamera = cameraRef.current;
       const aimingMultiplier = useGameStore.getState().isAiming
         ? defaultWeapon.adsMouseSensitivityMultiplier
         : 1;
       const sensitivity = playerConfig.mouseSensitivity * aimingMultiplier;
 
-      euler.setFromQuaternion(activeCamera.quaternion, "YXZ");
-      euler.y -= event.movementX * sensitivity;
-      euler.x -= event.movementY * sensitivity;
-      euler.x = THREE.MathUtils.clamp(euler.x, -Math.PI / 2, Math.PI / 2);
-      activeCamera.quaternion.setFromEuler(euler);
+      yawRef.current -= event.movementX * sensitivity;
+      pitchRef.current = THREE.MathUtils.clamp(
+        pitchRef.current - event.movementY * sensitivity,
+        -Math.PI / 2,
+        Math.PI / 2,
+      );
     };
 
     document.addEventListener("mousemove", handleMouseMove);
     return () => document.removeEventListener("mousemove", handleMouseMove);
-  }, [euler]);
+  }, []);
 
   const hasHeadroom = useCallback(() => {
     const body = rigidBodyRef.current;
@@ -312,11 +317,16 @@ export function PlayerController({
     }
 
     const activeCamera = cameraRef.current;
+    const cameraQuaternion = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler(pitchRef.current, yawRef.current, 0, "YXZ"),
+    );
+    activeCamera.quaternion.copy(cameraQuaternion);
+
     const forward = new THREE.Vector3();
     const right = new THREE.Vector3();
     const wishDirection = new THREE.Vector3();
 
-    activeCamera.getWorldDirection(forward);
+    forward.set(0, 0, -1).applyQuaternion(cameraQuaternion);
     forward.y = 0;
     forward.normalize();
     right.crossVectors(forward, threeUp).normalize();
@@ -459,11 +469,71 @@ export function PlayerController({
       1 - Math.exp(-dt * playerConfig.crouchLerpSpeed),
     );
 
-    activeCamera.position.set(
+    const cameraFocus = new THREE.Vector3(
       bodyTranslation.x,
       bodyTranslation.y + currentEyeHeightRef.current,
       bodyTranslation.z,
     );
+
+    if (cameraMode === "thirdPerson") {
+      const horizontalForward = forward.clone();
+      horizontalForward.y = 0;
+      if (horizontalForward.lengthSq() < 0.001) {
+        horizontalForward.set(0, 0, -1).applyAxisAngle(threeUp, yawRef.current);
+      }
+      horizontalForward.normalize();
+
+      const desiredCameraPosition = cameraFocus
+        .clone()
+        .addScaledVector(horizontalForward, -playerConfig.thirdPersonDistance)
+        .add(new THREE.Vector3(0, playerConfig.thirdPersonHeight, 0));
+      const cameraRayDirection = desiredCameraPosition.clone().sub(cameraFocus);
+      const desiredDistance = cameraRayDirection.length();
+
+      if (desiredDistance > 0.001) {
+        cameraRayDirection.normalize();
+        const cameraRay = new rapier.Ray(
+          { x: cameraFocus.x, y: cameraFocus.y, z: cameraFocus.z },
+          {
+            x: cameraRayDirection.x,
+            y: cameraRayDirection.y,
+            z: cameraRayDirection.z,
+          },
+        );
+        const cameraHit = world.castRay(
+          cameraRay,
+          desiredDistance,
+          true,
+          undefined,
+          undefined,
+          undefined,
+          body,
+        );
+
+        if (cameraHit) {
+          const clampedDistance = Math.max(
+            playerConfig.thirdPersonMinDistance,
+            cameraHit.timeOfImpact - playerConfig.thirdPersonCollisionPadding,
+          );
+          desiredCameraPosition.copy(cameraFocus).addScaledVector(
+            cameraRayDirection,
+            clampedDistance,
+          );
+        }
+      }
+
+      if (thirdPersonPositionRef.current.lengthSq() === 0) {
+        thirdPersonPositionRef.current.copy(desiredCameraPosition);
+      }
+      thirdPersonPositionRef.current.lerp(
+        desiredCameraPosition,
+        1 - Math.exp(-dt * playerConfig.thirdPersonCameraLerpSpeed),
+      );
+      activeCamera.position.copy(thirdPersonPositionRef.current);
+    } else {
+      thirdPersonPositionRef.current.set(0, 0, 0);
+      activeCamera.position.copy(cameraFocus);
+    }
 
     const targetFov = inputState.aim
       ? defaultWeapon.adsFov
@@ -555,6 +625,23 @@ export function PlayerController({
         angularDamping={1}
         lockRotations
       >
+        <group visible={cameraMode === "thirdPerson"}>
+          <mesh position={[0, 0.05, 0]} castShadow>
+            <capsuleGeometry
+              args={[
+                playerConfig.colliderRadius,
+                playerConfig.standingColliderHalfHeight * 2,
+                6,
+                10,
+              ]}
+            />
+            <meshStandardMaterial color="#2d3542" roughness={0.8} />
+          </mesh>
+          <mesh position={[0, 1.05, -0.08]} castShadow>
+            <boxGeometry args={[0.5, 0.28, 0.35]} />
+            <meshStandardMaterial color="#d7a47f" roughness={0.75} />
+          </mesh>
+        </group>
         <CapsuleCollider
           key={isColliderCrouched ? "crouched" : "standing"}
           args={[

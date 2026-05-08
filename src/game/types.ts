@@ -5,7 +5,6 @@ export interface WeaponConfig {
   damage: number;
   fireRate: number; // milliseconds between shots
   magazineSize: number;
-  reserveAmmo: number;
   reloadTime: number;
   hipFireSpread: number;
   adsSpread: number;
@@ -92,9 +91,9 @@ export interface GameState {
   maxHealth: number;
   ammo: number;
   magazineSize: number;
-  reserveAmmo: number;
   isReloading: boolean;
   isAiming: boolean;
+  cameraMode: "firstPerson" | "thirdPerson";
   weaponCooldown: number;
   gameStarted: boolean;
 }

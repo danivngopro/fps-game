@@ -19,6 +19,7 @@ interface GameStore extends GameState {
   refillAmmo: () => void;
   setReloading: (isReloading: boolean) => void;
   setAiming: (isAiming: boolean) => void;
+  toggleCameraMode: () => void;
   setWeaponCooldown: (weaponCooldown: number) => void;
   completeReload: () => void;
   startGame: () => void;
@@ -32,9 +33,9 @@ const initialState: GameState = {
   maxHealth: 100,
   ammo: defaultWeapon.magazineSize,
   magazineSize: defaultWeapon.magazineSize,
-  reserveAmmo: defaultWeapon.reserveAmmo,
   isReloading: false,
   isAiming: false,
+  cameraMode: "firstPerson",
   weaponCooldown: 0,
   gameStarted: false,
 };
@@ -90,19 +91,19 @@ export const useGameStore = create<GameStore>((set) => ({
 
   setAiming: (isAiming: boolean) => set({ isAiming }),
 
+  toggleCameraMode: () =>
+    set((state) => ({
+      cameraMode:
+        state.cameraMode === "firstPerson" ? "thirdPerson" : "firstPerson",
+    })),
+
   setWeaponCooldown: (weaponCooldown: number) => set({ weaponCooldown }),
 
   completeReload: () =>
-    set((state) => {
-      const needed = state.magazineSize - state.ammo;
-      const refillAmount = Math.min(needed, state.reserveAmmo);
-
-      return {
-        ammo: state.ammo + refillAmount,
-        reserveAmmo: Math.max(0, state.reserveAmmo - refillAmount),
-        isReloading: false,
-      };
-    }),
+    set((state) => ({
+      ammo: state.magazineSize,
+      isReloading: false,
+    })),
 
   startGame: () => set({ gameStarted: true }),
 

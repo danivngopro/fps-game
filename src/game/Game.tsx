@@ -10,6 +10,7 @@ import { Map as ArenaMap } from "./components/Map";
 import { TargetDummy } from "./components/TargetDummy";
 import { PlayerController } from "./components/PlayerController";
 import { BulletImpacts } from "./components/BulletImpact";
+import { DesertSky } from "./components/DesertSky";
 import { useGameStore } from "./store";
 import { mapConfig } from "./config/map";
 import { defaultWeapon } from "./config/weapons";
@@ -102,6 +103,7 @@ export function Game() {
 
   return (
     <>
+      <DesertSky />
       <ArenaMap />
       <BulletImpacts impacts={bulletImpacts} />
 

@@ -6,12 +6,12 @@ export function HUD() {
     maxHealth,
     ammo,
     magazineSize,
-    reserveAmmo,
     kills,
     score,
     gameStarted,
     isReloading,
     isAiming,
+    cameraMode,
   } = useGameStore();
 
   const healthPercent = (health / maxHealth) * 100;
@@ -56,8 +56,8 @@ export function HUD() {
         <div>
           {isReloading ? "RELOADING" : "AMMO"}: {ammo} / {magazineSize}
         </div>
-        <div>RESERVE: {reserveAmmo}</div>
         <div>{isAiming ? "ADS" : "HIP FIRE"}</div>
+        <div>{cameraMode === "thirdPerson" ? "THIRD PERSON" : "FIRST PERSON"}</div>
         <div
           style={{
             width: "150px",
@@ -128,7 +128,7 @@ export function HUD() {
         >
           <div>CLICK TO PLAY</div>
           <div style={{ fontSize: "18px", marginTop: "20px" }}>
-            WASD move | SPACE jump | CTRL crouch | RMB aim | LMB shoot | R reload
+            WASD move | SPACE jump | SHIFT crouch | RMB aim | LMB shoot | R reload | V camera
           </div>
         </div>
       )}
