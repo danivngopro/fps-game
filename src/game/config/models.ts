@@ -9,13 +9,13 @@ export const modelPaths = {
 
 export const modelTransforms = {
   player: {
-    scale: 0.34,
-    position: [0, 0, -0.05] as [number, number, number],
+    scale: 0.36,
+    position: [0, -0.95, -0.05] as [number, number, number],
     rotation: [0, Math.PI, 0] as [number, number, number],
   },
   bot: {
-    scale: 0.32,
-    position: [0, 0, -0.05] as [number, number, number],
+    scale: 0.36,
+    position: [0, -0.95, -0.05] as [number, number, number],
     rotation: [0, Math.PI, 0] as [number, number, number],
   },
 };

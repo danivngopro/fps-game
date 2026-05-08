@@ -53,6 +53,7 @@ Both were converted from `Animated Human by @Quaternius`, downloaded from OpenGa
 - Original format: FBX/DAE/Blend/OBJ
 - Integrated format: GLB converted with `fbx2gltf`
 - Clips detected after conversion: `Human Armature|ArmatureAction.002`, `Human Armature|Death`, `Human Armature|Idle`, `Human Armature|Jump`, `Human Armature|Punch`, `Human Armature|Run`, `Human Armature|Walk`, `Human Armature|Working`
+- Material note: the converted GLB currently contains a single white untextured skinned material, so the runtime applies role-based fallback materials for player and bot visuals.
 
 ## Recommended Free Animated Character Assets
 

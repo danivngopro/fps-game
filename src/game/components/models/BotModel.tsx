@@ -68,6 +68,7 @@ export function BotModel({ src, botId, animationState }: BotModelProps) {
       <AnimatedCharacterModel
         src={src}
         animationState={animationState}
+        role="bot"
         clipMap={quaterniusAnimatedHumanClipMap}
         fallback={<BotFallback botId={botId} />}
         onModelReady={onModelReady}

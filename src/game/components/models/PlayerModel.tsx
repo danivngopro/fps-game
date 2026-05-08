@@ -37,6 +37,7 @@ export function PlayerModel({ src, animationState }: PlayerModelProps) {
       <AnimatedCharacterModel
         src={src}
         animationState={animationState}
+        role="player"
         clipMap={quaterniusAnimatedHumanClipMap}
         fallback={<PlayerFallback />}
       />
