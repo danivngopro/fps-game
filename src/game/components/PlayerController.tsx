@@ -375,7 +375,13 @@ export function PlayerController({
             : playerConfig.airAcceleration;
         const wishSpeed = targetSpeed * playerConfig.airControl;
 
-        accelerate(horizontalVelocity, wishDirection, wishSpeed, acceleration, dt);
+        accelerate(
+          horizontalVelocity,
+          wishDirection,
+          wishSpeed,
+          acceleration,
+          dt,
+        );
       }
 
       const drag = Math.max(0, 1 - playerConfig.airDrag * dt);
@@ -408,7 +414,9 @@ export function PlayerController({
 
       const walkSpeed = horizontalVelocity.length();
       if (walkSpeed > playerConfig.maxWalkSpeed) {
-        horizontalVelocity.multiplyScalar(playerConfig.maxWalkSpeed / walkSpeed);
+        horizontalVelocity.multiplyScalar(
+          playerConfig.maxWalkSpeed / walkSpeed,
+        );
       }
     }
 
@@ -457,7 +465,9 @@ export function PlayerController({
       bodyTranslation.z,
     );
 
-    const targetFov = inputState.aim ? defaultWeapon.adsFov : playerConfig.baseFov;
+    const targetFov = inputState.aim
+      ? defaultWeapon.adsFov
+      : playerConfig.baseFov;
     if (activeCamera instanceof THREE.PerspectiveCamera) {
       activeCamera.fov = THREE.MathUtils.lerp(
         activeCamera.fov,
@@ -480,7 +490,10 @@ export function PlayerController({
       }
     }
 
-    if (frameNow - lastDebugTimeRef.current > playerConfig.debugUpdateInterval) {
+    if (
+      frameNow - lastDebugTimeRef.current >
+      playerConfig.debugUpdateInterval
+    ) {
       setDebug({
         speed,
         grounded: isGroundedRef.current,
@@ -488,7 +501,11 @@ export function PlayerController({
         crouched: isCrouchedRef.current,
         fps: 1 / Math.max(delta, 0.0001),
         position: [bodyTranslation.x, bodyTranslation.y, bodyTranslation.z],
-        velocity: [velocityRef.current.x, velocityRef.current.y, velocityRef.current.z],
+        velocity: [
+          velocityRef.current.x,
+          velocityRef.current.y,
+          velocityRef.current.z,
+        ],
       });
       lastDebugTimeRef.current = frameNow;
     }

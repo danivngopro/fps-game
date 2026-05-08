@@ -19,11 +19,7 @@ function App() {
         }}
         shadows
       >
-        <Physics
-          gravity={[0, -9.8, 0]}
-          debug={false}
-          timeStep="vary"
-        >
+        <Physics gravity={[0, -9.8, 0]} debug={false} timeStep="vary">
           <Game />
         </Physics>
       </Canvas>
