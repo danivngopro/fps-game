@@ -4,6 +4,7 @@ export function HUD() {
   const {
     health,
     maxHealth,
+    deaths,
     ammo,
     magazineSize,
     kills,
@@ -12,10 +13,16 @@ export function HUD() {
     isReloading,
     isAiming,
     cameraMode,
+    matchTimeRemaining,
+    damageFlash,
   } = useGameStore();
 
   const healthPercent = (health / maxHealth) * 100;
   const ammoPercent = (ammo / magazineSize) * 100;
+  const minutes = Math.floor(matchTimeRemaining / 60);
+  const seconds = Math.floor(matchTimeRemaining % 60)
+    .toString()
+    .padStart(2, "0");
 
   return (
     <div
@@ -41,7 +48,9 @@ export function HUD() {
         }}
       >
         <div>KILLS: {kills}</div>
+        <div>DEATHS: {deaths}</div>
         <div>SCORE: {score}</div>
+        <div>TIME: {minutes}:{seconds}</div>
       </div>
 
       <div
@@ -128,9 +137,20 @@ export function HUD() {
         >
           <div>CLICK TO PLAY</div>
           <div style={{ fontSize: "18px", marginTop: "20px" }}>
-            WASD move | SPACE jump | SHIFT crouch | RMB aim | LMB shoot | R reload | V camera
+            WASD move | SPACE jump | SHIFT crouch | RMB aim | LMB shoot | R reload | V camera | F4 reset
           </div>
         </div>
+      )}
+
+      {damageFlash && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background:
+              "radial-gradient(circle, rgba(255,0,0,0.05) 45%, rgba(255,0,0,0.28) 100%)",
+          }}
+        />
       )}
 
       <style>{`

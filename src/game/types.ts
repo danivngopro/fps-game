@@ -17,7 +17,7 @@ export interface WeaponConfig {
 export type Vector3Tuple = [number, number, number];
 export type EulerTuple = [number, number, number];
 export type SurfaceType = "sand" | "stone" | "concrete" | "wood" | "metal" | "target";
-export type ShootableObjectType = "target" | "environment";
+export type ShootableObjectType = "target" | "bot" | "environment";
 
 export interface MapBoxConfig {
   id: string;
@@ -89,6 +89,7 @@ export interface GameState {
   kills: number;
   health: number;
   maxHealth: number;
+  deaths: number;
   ammo: number;
   magazineSize: number;
   isReloading: boolean;
@@ -96,6 +97,9 @@ export interface GameState {
   cameraMode: "firstPerson" | "thirdPerson";
   weaponCooldown: number;
   gameStarted: boolean;
+  matchDuration: number;
+  matchTimeRemaining: number;
+  botCount: number;
 }
 
 export interface RaycastHit {
@@ -104,6 +108,7 @@ export interface RaycastHit {
   distance: number;
   objectType: ShootableObjectType;
   targetId?: string;
+  botId?: string;
   materialType?: SurfaceType;
 }
 
@@ -112,6 +117,7 @@ export interface ShootableObject {
   object: THREE.Object3D;
   objectType: ShootableObjectType;
   targetId?: string;
+  botId?: string;
   surfaceType: SurfaceType;
 }
 
@@ -130,4 +136,21 @@ export interface DebugSnapshot {
   fps: number;
   position: Vector3Tuple;
   velocity: Vector3Tuple;
+  botCount: number;
+  health: number;
+  cameraMode: "firstPerson" | "thirdPerson";
+}
+
+export interface BotConfig {
+  id: string;
+  spawn: Vector3Tuple;
+  patrolWaypoints: Vector3Tuple[];
+  maxHp: number;
+  moveSpeed: number;
+  respawnMs: number;
+  scoreValue: number;
+  detectionRange: number;
+  fireRateMs: number;
+  damage: number;
+  accuracy: number;
 }

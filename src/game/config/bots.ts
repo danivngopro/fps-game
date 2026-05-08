@@ -1,0 +1,58 @@
+import type { BotConfig } from "../types";
+
+export const botConfigs: BotConfig[] = [
+  {
+    id: "bot-courtyard",
+    spawn: [-18, 1.4, -12],
+    patrolWaypoints: [
+      [-18, 1.4, -12],
+      [-4, 1.4, -18],
+      [10, 1.4, -12],
+      [6, 1.4, 6],
+    ],
+    maxHp: 100,
+    moveSpeed: 3.2,
+    respawnMs: 3500,
+    scoreValue: 250,
+    detectionRange: 38,
+    fireRateMs: 1100,
+    damage: 8,
+    accuracy: 0.68,
+  },
+  {
+    id: "bot-east-alley",
+    spawn: [36, 1.4, 10],
+    patrolWaypoints: [
+      [36, 1.4, 10],
+      [42, 1.4, -6],
+      [31, 1.4, -18],
+      [22, 1.4, -7],
+    ],
+    maxHp: 90,
+    moveSpeed: 2.8,
+    respawnMs: 4000,
+    scoreValue: 225,
+    detectionRange: 34,
+    fireRateMs: 1250,
+    damage: 7,
+    accuracy: 0.62,
+  },
+  {
+    id: "bot-south-market",
+    spawn: [-30, 1.4, 30],
+    patrolWaypoints: [
+      [-30, 1.4, 30],
+      [-12, 1.4, 26],
+      [2, 1.4, 18],
+      [-18, 1.4, 12],
+    ],
+    maxHp: 110,
+    moveSpeed: 2.6,
+    respawnMs: 4500,
+    scoreValue: 275,
+    detectionRange: 36,
+    fireRateMs: 1400,
+    damage: 10,
+    accuracy: 0.58,
+  },
+];

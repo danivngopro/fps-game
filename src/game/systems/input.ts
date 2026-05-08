@@ -46,6 +46,10 @@ export class InputManager {
       e.preventDefault();
       useGameStore.getState().toggleDebug();
     }
+    if (key === "f4" && !e.repeat) {
+      e.preventDefault();
+      useGameStore.getState().resetMatch();
+    }
     if (key === "v" && !e.repeat) {
       useGameStore.getState().toggleCameraMode();
     }

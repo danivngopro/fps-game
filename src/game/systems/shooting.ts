@@ -65,6 +65,7 @@ export class ShootingSystem {
         distance: intersect.distance,
         objectType: shootable.objectType,
         targetId: shootable.targetId,
+        botId: shootable.botId,
         materialType: shootable.surfaceType,
       };
     }

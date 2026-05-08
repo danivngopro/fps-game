@@ -1,18 +1,22 @@
 import {
   createRef,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
   type RefObject,
 } from "react";
+import { useFrame } from "@react-three/fiber";
 import { Map as ArenaMap } from "./components/Map";
 import { TargetDummy } from "./components/TargetDummy";
 import { PlayerController } from "./components/PlayerController";
 import { BulletImpacts } from "./components/BulletImpact";
 import { DesertSky } from "./components/DesertSky";
+import { BotEnemy, type BotEnemyHandle } from "./components/BotEnemy";
 import { useGameStore } from "./store";
 import { mapConfig } from "./config/map";
+import { botConfigs } from "./config/bots";
 import { defaultWeapon } from "./config/weapons";
 import { gameAudio } from "./systems/audio";
 import type { TargetDummyHandle } from "./components/TargetDummy";
@@ -46,7 +50,33 @@ export function Game() {
 
     return refs;
   }, []);
-  const { addKill, addScore, setShowHitMarker } = useGameStore();
+  const botRefs = useMemo(() => {
+    const refs = new globalThis.Map<string, RefObject<BotEnemyHandle | null>>();
+
+    botConfigs.forEach((config) => {
+      refs.set(config.id, createRef<BotEnemyHandle>());
+    });
+
+    return refs;
+  }, []);
+  const {
+    addKill,
+    addScore,
+    setShowHitMarker,
+    tickMatch,
+    setBotCount,
+  } = useGameStore();
+
+  useFrame((_, delta) => {
+    const state = useGameStore.getState();
+    if (state.gameStarted && state.matchTimeRemaining > 0) {
+      tickMatch(delta);
+    }
+  });
+
+  useEffect(() => {
+    setBotCount(botConfigs.length);
+  }, [setBotCount]);
 
   const handleTargetDeath = useCallback(
     (targetId: string) => {
@@ -81,6 +111,15 @@ export function Game() {
         return;
       }
 
+      if (hit.objectType === "bot" && hit.botId) {
+        const botRef = botRefs.get(hit.botId);
+        botRef?.current?.takeDamage(defaultWeapon.damage);
+        gameAudio.play("targetHit");
+        setShowHitMarker(true);
+        window.setTimeout(() => setShowHitMarker(false), 100);
+        return;
+      }
+
       setBulletImpacts((current) => {
         const next = [
           ...current,
@@ -96,7 +135,7 @@ export function Game() {
         return next.slice(-100);
       });
     },
-    [setShowHitMarker, targetRefs],
+    [botRefs, setShowHitMarker, targetRefs],
   );
 
   const aliveTargets = targets.filter((target) => target.alive);
@@ -116,6 +155,18 @@ export function Game() {
           maxHp={50}
           onDeath={() => handleTargetDeath(target.id)}
           onHit={() => undefined}
+        />
+      ))}
+
+      {botConfigs.map((config) => (
+        <BotEnemy
+          key={config.id}
+          ref={botRefs.get(config.id)}
+          config={config}
+          onDeath={(botConfig) => {
+            addKill();
+            addScore(botConfig.scoreValue);
+          }}
         />
       ))}
 

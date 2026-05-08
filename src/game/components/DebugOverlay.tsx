@@ -1,7 +1,8 @@
 import { useGameStore } from "../store";
 
 export function DebugOverlay() {
-  const { debugVisible, debug, ammo, magazineSize, isReloading } = useGameStore();
+  const { debugVisible, debug, ammo, magazineSize, isReloading, health, cameraMode } =
+    useGameStore();
 
   if (!debugVisible) return null;
 
@@ -28,6 +29,9 @@ export function DebugOverlay() {
       <div>grounded: {String(debug.grounded)}</div>
       <div>bhop grace: {String(debug.bunnyhopGraceActive)}</div>
       <div>crouched: {String(debug.crouched)}</div>
+      <div>bots: {debug.botCount}</div>
+      <div>health: {health}</div>
+      <div>camera: {cameraMode}</div>
       <div>
         vel x/z: {debug.velocity[0].toFixed(2)}, {debug.velocity[2].toFixed(2)}
       </div>

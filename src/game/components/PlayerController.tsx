@@ -18,6 +18,7 @@ import { playerConfig } from "../config/player";
 import { defaultWeapon } from "../config/weapons";
 import { useGameStore } from "../store";
 import { gameAudio } from "../systems/audio";
+import { playerRuntime } from "../systems/playerRuntime";
 import { InputManager } from "../systems/input";
 import { ShootingSystem } from "../systems/shooting";
 import type { RaycastHit, ShootableObject, SurfaceType } from "../types";
@@ -89,6 +90,8 @@ export function PlayerController({
   const currentEyeHeightRef = useRef(playerConfig.standingEyeHeight);
   const lastFootstepTimeRef = useRef(0);
   const lastDebugTimeRef = useRef(0);
+  const deathTimerRef = useRef<number | null>(null);
+  const isDeadRef = useRef(false);
   const [isColliderCrouched, setIsColliderCrouched] = useState(false);
   const {
     consumeAmmo,
@@ -96,6 +99,7 @@ export function PlayerController({
     startGame,
     gameStarted,
     ammo,
+    health,
     isReloading,
     cameraMode,
     setReloading,
@@ -103,6 +107,8 @@ export function PlayerController({
     setShowMuzzleFlash,
     completeReload,
     setDebug,
+    addDeath,
+    restorePlayer,
   } = useGameStore();
 
   const resetToSpawn = useCallback(() => {
@@ -151,6 +157,9 @@ export function PlayerController({
       inputManagerRef.current?.cleanup();
       if (reloadTimerRef.current !== null) {
         window.clearTimeout(reloadTimerRef.current);
+      }
+      if (deathTimerRef.current !== null) {
+        window.clearTimeout(deathTimerRef.current);
       }
     };
   }, []);
@@ -220,10 +229,18 @@ export function PlayerController({
       if (object.userData.shootable !== true) return;
 
       const objectType =
-        object.userData.objectType === "target" ? "target" : "environment";
+        object.userData.objectType === "target"
+          ? "target"
+          : object.userData.objectType === "bot"
+            ? "bot"
+            : "environment";
       const targetId =
         typeof object.userData.targetId === "string"
           ? object.userData.targetId
+          : undefined;
+      const botId =
+        typeof object.userData.botId === "string"
+          ? object.userData.botId
           : undefined;
 
       if (objectType === "target") {
@@ -237,6 +254,7 @@ export function PlayerController({
         object,
         objectType,
         targetId,
+        botId,
         surfaceType: (object.userData.surfaceType as SurfaceType) ?? "concrete",
       });
     });
@@ -254,11 +272,34 @@ export function PlayerController({
 
     if (!inputState.pointerLocked || !gameStarted) return;
 
+    if (health <= 0 && !isDeadRef.current) {
+      isDeadRef.current = true;
+      playerRuntime.alive = false;
+      addDeath();
+      deathTimerRef.current = window.setTimeout(() => {
+        resetToSpawn();
+        restorePlayer();
+        playerRuntime.alive = true;
+        isDeadRef.current = false;
+        deathTimerRef.current = null;
+      }, 1200);
+    }
+
+    if (isDeadRef.current) {
+      body.setLinvel({ x: 0, y: 0, z: 0 }, true);
+      return;
+    }
+
     if (inputState.aim !== useGameStore.getState().isAiming) {
       setAiming(inputState.aim);
     }
 
     const bodyTranslation = body.translation();
+    playerRuntime.position.set(
+      bodyTranslation.x,
+      bodyTranslation.y,
+      bodyTranslation.z,
+    );
     const bounds = mapConfig.mapBounds;
     if (
       bodyTranslation.y < mapConfig.outOfBoundsY ||
@@ -474,6 +515,7 @@ export function PlayerController({
       bodyTranslation.y + currentEyeHeightRef.current,
       bodyTranslation.z,
     );
+    playerRuntime.eyePosition.copy(cameraFocus);
 
     if (cameraMode === "thirdPerson") {
       const horizontalForward = forward.clone();
@@ -576,6 +618,9 @@ export function PlayerController({
           velocityRef.current.y,
           velocityRef.current.z,
         ],
+        botCount: useGameStore.getState().botCount,
+        health: useGameStore.getState().health,
+        cameraMode: useGameStore.getState().cameraMode,
       });
       lastDebugTimeRef.current = frameNow;
     }
