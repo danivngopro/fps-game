@@ -18,6 +18,7 @@ import { gameAudio } from "../systems/audio";
 import { useGameStore } from "../store";
 import { modelPaths } from "../config/models";
 import { BotModel } from "./models/BotModel";
+import type { CharacterAnimationState } from "./models/AnimatedCharacterModel";
 import type { BotConfig } from "../types";
 
 interface BotEnemyProps {
@@ -44,7 +45,10 @@ export const BotEnemy = forwardRef<BotEnemyHandle, BotEnemyProps>(
     const lastShotTimeRef = useRef(0);
     const respawnTimerRef = useRef<number | null>(null);
     const hitFlashRef = useRef(0);
+    const animationStateRef = useRef<CharacterAnimationState>("walk");
     const [alive, setAlive] = useState(true);
+    const [animationState, setAnimationState] =
+      useState<CharacterAnimationState>("walk");
     const damagePlayer = useGameStore((state) => state.damagePlayer);
     const setDamageFlash = useGameStore((state) => state.setDamageFlash);
 
@@ -201,6 +205,16 @@ export const BotEnemy = forwardRef<BotEnemyHandle, BotEnemyProps>(
       if (now - lastShotTimeRef.current < config.fireRateMs) return;
 
       lastShotTimeRef.current = now;
+      if (animationStateRef.current !== "shoot") {
+        animationStateRef.current = "shoot";
+        setAnimationState("shoot");
+        window.setTimeout(() => {
+          if (aliveRef.current && animationStateRef.current === "shoot") {
+            animationStateRef.current = "walk";
+            setAnimationState("walk");
+          }
+        }, 240);
+      }
       gameAudio.play("shoot");
 
       if (Math.random() <= config.accuracy) {
@@ -222,7 +236,11 @@ export const BotEnemy = forwardRef<BotEnemyHandle, BotEnemyProps>(
       >
         <CapsuleCollider args={[0.55, 0.45]} friction={0.5} restitution={0} />
         <group ref={meshRef} visible={alive}>
-          <BotModel src={modelPaths.bot} botId={config.id} />
+          <BotModel
+            src={modelPaths.bot}
+            botId={config.id}
+            animationState={alive ? animationState : "death"}
+          />
         </group>
       </RigidBody>
     );

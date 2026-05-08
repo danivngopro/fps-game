@@ -1,10 +1,18 @@
 import { useCallback } from "react";
 import * as THREE from "three";
-import { ModelLoader } from "./ModelLoader";
+import {
+  AnimatedCharacterModel,
+  type CharacterAnimationState,
+} from "./AnimatedCharacterModel";
+import {
+  modelTransforms,
+  quaterniusAnimatedHumanClipMap,
+} from "../../config/models";
 
 interface BotModelProps {
   src?: string;
   botId: string;
+  animationState: CharacterAnimationState;
 }
 
 function applyBotUserData(root: THREE.Object3D, botId: string) {
@@ -45,17 +53,25 @@ function BotFallback({ botId }: { botId: string }) {
   );
 }
 
-export function BotModel({ src, botId }: BotModelProps) {
+export function BotModel({ src, botId, animationState }: BotModelProps) {
   const onModelReady = useCallback(
     (root: THREE.Object3D) => applyBotUserData(root, botId),
     [botId],
   );
 
   return (
-    <ModelLoader
-      src={src}
-      fallback={<BotFallback botId={botId} />}
-      onModelReady={onModelReady}
-    />
+    <group
+      position={modelTransforms.bot.position}
+      rotation={modelTransforms.bot.rotation}
+      scale={modelTransforms.bot.scale}
+    >
+      <AnimatedCharacterModel
+        src={src}
+        animationState={animationState}
+        clipMap={quaterniusAnimatedHumanClipMap}
+        fallback={<BotFallback botId={botId} />}
+        onModelReady={onModelReady}
+      />
+    </group>
   );
 }

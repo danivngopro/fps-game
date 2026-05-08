@@ -25,6 +25,7 @@ import { ShootingSystem } from "../systems/shooting";
 import type { RaycastHit, ShootableObject, SurfaceType } from "../types";
 import { WeaponViewModel } from "./WeaponViewModel";
 import { PlayerModel } from "./models/PlayerModel";
+import type { CharacterAnimationState } from "./models/AnimatedCharacterModel";
 import type { TargetDummyHandle } from "./TargetDummy";
 
 interface PlayerControllerProps {
@@ -90,11 +91,15 @@ export function PlayerController({
   const velocityRef = useRef(new THREE.Vector3());
   const horizontalVelocityRef = useRef(new THREE.Vector3());
   const currentEyeHeightRef = useRef(playerConfig.standingEyeHeight);
+  const playerVisualRef = useRef<THREE.Group>(null);
+  const playerAnimationStateRef = useRef<CharacterAnimationState>("idle");
   const lastFootstepTimeRef = useRef(0);
   const lastDebugTimeRef = useRef(0);
   const deathTimerRef = useRef<number | null>(null);
   const isDeadRef = useRef(false);
   const [isColliderCrouched, setIsColliderCrouched] = useState(false);
+  const [playerAnimationState, setPlayerAnimationState] =
+    useState<CharacterAnimationState>("idle");
   const {
     consumeAmmo,
     addScore,
@@ -592,6 +597,28 @@ export function PlayerController({
     }
 
     const speed = horizontalVelocity.length();
+    if (playerVisualRef.current) {
+      playerVisualRef.current.rotation.y = yawRef.current;
+    }
+    const nextPlayerAnimationState: CharacterAnimationState = isDeadRef.current
+      ? "death"
+      : !isGroundedRef.current
+        ? "jump"
+        : isCrouchedRef.current
+          ? "crouch"
+          : inputState.aim
+            ? "aim"
+            : speed > playerConfig.walkSpeed * 0.75
+              ? "run"
+              : speed > 1.5
+              ? "walk"
+                : "idle";
+
+    if (nextPlayerAnimationState !== playerAnimationStateRef.current) {
+      playerAnimationStateRef.current = nextPlayerAnimationState;
+      setPlayerAnimationState(nextPlayerAnimationState);
+    }
+
     if (isGroundedRef.current && speed > 2.1 && wishDirection.lengthSq() > 0) {
       const stepInterval = THREE.MathUtils.clamp(
         playerConfig.footstepBaseInterval - speed * 9,
@@ -672,8 +699,14 @@ export function PlayerController({
         angularDamping={1}
         lockRotations
       >
-        <group visible={cameraMode === "thirdPerson"}>
-          <PlayerModel src={modelPaths.player} />
+        <group
+          ref={playerVisualRef}
+          visible={cameraMode === "thirdPerson"}
+        >
+          <PlayerModel
+            src={modelPaths.player}
+            animationState={playerAnimationState}
+          />
         </group>
         <CapsuleCollider
           key={isColliderCrouched ? "crouched" : "standing"}

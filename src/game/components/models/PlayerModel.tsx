@@ -1,7 +1,15 @@
-import { ModelLoader } from "./ModelLoader";
+import {
+  AnimatedCharacterModel,
+  type CharacterAnimationState,
+} from "./AnimatedCharacterModel";
+import {
+  modelTransforms,
+  quaterniusAnimatedHumanClipMap,
+} from "../../config/models";
 
 interface PlayerModelProps {
   src?: string;
+  animationState: CharacterAnimationState;
 }
 
 function PlayerFallback() {
@@ -19,6 +27,19 @@ function PlayerFallback() {
   );
 }
 
-export function PlayerModel({ src }: PlayerModelProps) {
-  return <ModelLoader src={src} fallback={<PlayerFallback />} />;
+export function PlayerModel({ src, animationState }: PlayerModelProps) {
+  return (
+    <group
+      position={modelTransforms.player.position}
+      rotation={modelTransforms.player.rotation}
+      scale={modelTransforms.player.scale}
+    >
+      <AnimatedCharacterModel
+        src={src}
+        animationState={animationState}
+        clipMap={quaterniusAnimatedHumanClipMap}
+        fallback={<PlayerFallback />}
+      />
+    </group>
+  );
 }
