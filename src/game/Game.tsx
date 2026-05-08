@@ -9,46 +9,22 @@ import {
 } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Map as ArenaMap } from "./components/Map";
-import { TargetDummy } from "./components/TargetDummy";
 import { PlayerController } from "./components/PlayerController";
 import { BulletImpacts } from "./components/BulletImpact";
 import { DesertSky } from "./components/DesertSky";
 import { BotEnemy, type BotEnemyHandle } from "./components/BotEnemy";
 import { useGameStore } from "./store";
-import { mapConfig } from "./config/map";
 import { botConfigs } from "./config/bots";
 import { defaultWeapon } from "./config/weapons";
 import { gameAudio } from "./systems/audio";
-import type { TargetDummyHandle } from "./components/TargetDummy";
 import type { BulletImpactData, RaycastHit } from "./types";
-
-interface TargetInstance {
-  id: string;
-  spawnIndex: number;
-  alive: boolean;
-}
+import type { TargetDummyHandle } from "./components/TargetDummy";
 
 export function Game() {
   const nextImpactIdRef = useRef(1);
   const [bulletImpacts, setBulletImpacts] = useState<BulletImpactData[]>([]);
-  const [targets, setTargets] = useState<TargetInstance[]>(() =>
-    mapConfig.targetDummySpawns.map((_, idx) => ({
-      id: `target-${idx}`,
-      spawnIndex: idx,
-      alive: true,
-    })),
-  );
   const targetRefs = useMemo(() => {
-    const refs = new globalThis.Map<
-      string,
-      RefObject<TargetDummyHandle | null>
-    >();
-
-    mapConfig.targetDummySpawns.forEach((_, idx) => {
-      refs.set(`target-${idx}`, createRef<TargetDummyHandle>());
-    });
-
-    return refs;
+    return new globalThis.Map<string, RefObject<TargetDummyHandle | null>>();
   }, []);
   const botRefs = useMemo(() => {
     const refs = new globalThis.Map<string, RefObject<BotEnemyHandle | null>>();
@@ -59,13 +35,8 @@ export function Game() {
 
     return refs;
   }, []);
-  const {
-    addKill,
-    addScore,
-    setShowHitMarker,
-    tickMatch,
-    setBotCount,
-  } = useGameStore();
+  const { addKill, addScore, setShowHitMarker, tickMatch, setBotCount } =
+    useGameStore();
 
   useFrame((_, delta) => {
     const state = useGameStore.getState();
@@ -77,28 +48,6 @@ export function Game() {
   useEffect(() => {
     setBotCount(botConfigs.length);
   }, [setBotCount]);
-
-  const handleTargetDeath = useCallback(
-    (targetId: string) => {
-      addKill();
-      addScore(100);
-
-      setTargets((prev) =>
-        prev.map((target) =>
-          target.id === targetId ? { ...target, alive: false } : target,
-        ),
-      );
-
-      window.setTimeout(() => {
-        setTargets((prev) =>
-          prev.map((target) =>
-            target.id === targetId ? { ...target, alive: true } : target,
-          ),
-        );
-      }, 2000);
-    },
-    [addKill, addScore],
-  );
 
   const handleShot = useCallback(
     (hit: RaycastHit) => {
@@ -138,25 +87,11 @@ export function Game() {
     [botRefs, setShowHitMarker, targetRefs],
   );
 
-  const aliveTargets = targets.filter((target) => target.alive);
-
   return (
     <>
       <DesertSky />
       <ArenaMap />
       <BulletImpacts impacts={bulletImpacts} />
-
-      {aliveTargets.map((target) => (
-        <TargetDummy
-          key={target.id}
-          ref={targetRefs.get(target.id)}
-          id={target.id}
-          position={mapConfig.targetDummySpawns[target.spawnIndex]}
-          maxHp={50}
-          onDeath={() => handleTargetDeath(target.id)}
-          onHit={() => undefined}
-        />
-      ))}
 
       {botConfigs.map((config) => (
         <BotEnemy

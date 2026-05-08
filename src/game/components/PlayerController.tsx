@@ -15,6 +15,7 @@ import {
 import * as THREE from "three";
 import { mapConfig } from "../config/map";
 import { playerConfig } from "../config/player";
+import { modelPaths } from "../config/models";
 import { defaultWeapon } from "../config/weapons";
 import { useGameStore } from "../store";
 import { gameAudio } from "../systems/audio";
@@ -23,6 +24,7 @@ import { InputManager } from "../systems/input";
 import { ShootingSystem } from "../systems/shooting";
 import type { RaycastHit, ShootableObject, SurfaceType } from "../types";
 import { WeaponViewModel } from "./WeaponViewModel";
+import { PlayerModel } from "./models/PlayerModel";
 import type { TargetDummyHandle } from "./TargetDummy";
 
 interface PlayerControllerProps {
@@ -671,21 +673,7 @@ export function PlayerController({
         lockRotations
       >
         <group visible={cameraMode === "thirdPerson"}>
-          <mesh position={[0, 0.05, 0]} castShadow>
-            <capsuleGeometry
-              args={[
-                playerConfig.colliderRadius,
-                playerConfig.standingColliderHalfHeight * 2,
-                6,
-                10,
-              ]}
-            />
-            <meshStandardMaterial color="#2d3542" roughness={0.8} />
-          </mesh>
-          <mesh position={[0, 1.05, -0.08]} castShadow>
-            <boxGeometry args={[0.5, 0.28, 0.35]} />
-            <meshStandardMaterial color="#d7a47f" roughness={0.75} />
-          </mesh>
+          <PlayerModel src={modelPaths.player} />
         </group>
         <CapsuleCollider
           key={isColliderCrouched ? "crouched" : "standing"}

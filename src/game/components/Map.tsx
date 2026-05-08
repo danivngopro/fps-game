@@ -1,6 +1,8 @@
 import { Box, Cylinder } from "@react-three/drei";
 import { RigidBody } from "@react-three/rapier";
 import { mapConfig } from "../config/map";
+import { modelPaths } from "../config/models";
+import { PropModel } from "./models/PropModel";
 import type { MapBoxConfig } from "../types";
 
 function ShootableBox({ item }: { item: MapBoxConfig }) {
@@ -30,8 +32,8 @@ function ShootableBox({ item }: { item: MapBoxConfig }) {
 }
 
 function Palm({ position, id }: { position: [number, number, number]; id: string }) {
-  return (
-    <RigidBody type="fixed" colliders={false} position={position}>
+  const fallback = (
+    <>
       <Cylinder
         args={[0.28, 0.42, 5.5, 7]}
         position={[0, 2.75, 0]}
@@ -56,6 +58,12 @@ function Palm({ position, id }: { position: [number, number, number]; id: string
       >
         <meshStandardMaterial color="#3d7b42" roughness={0.8} />
       </Box>
+    </>
+  );
+
+  return (
+    <RigidBody type="fixed" colliders={false} position={position}>
+      <PropModel src={modelPaths.props.palm} fallback={fallback} />
     </RigidBody>
   );
 }

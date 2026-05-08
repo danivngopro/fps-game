@@ -16,6 +16,8 @@ import * as THREE from "three";
 import { playerRuntime } from "../systems/playerRuntime";
 import { gameAudio } from "../systems/audio";
 import { useGameStore } from "../store";
+import { modelPaths } from "../config/models";
+import { BotModel } from "./models/BotModel";
 import type { BotConfig } from "../types";
 
 interface BotEnemyProps {
@@ -122,9 +124,20 @@ export const BotEnemy = forwardRef<BotEnemyHandle, BotEnemyProps>(
       const materialIntensity = hitFlashRef.current > 0 ? 0.8 : 0;
       mesh.traverse((object) => {
         if (object instanceof THREE.Mesh) {
-          const material = object.material as THREE.MeshStandardMaterial;
-          material.emissive.set(materialIntensity > 0 ? "#ff3333" : "#000000");
-          material.emissiveIntensity = materialIntensity;
+          const materials = Array.isArray(object.material)
+            ? object.material
+            : [object.material];
+
+          materials.forEach((material) => {
+            if ("emissive" in material && material.emissive instanceof THREE.Color) {
+              material.emissive.set(
+                materialIntensity > 0 ? "#ff3333" : "#000000",
+              );
+            }
+            if ("emissiveIntensity" in material) {
+              material.emissiveIntensity = materialIntensity;
+            }
+          });
         }
       });
 
@@ -209,18 +222,7 @@ export const BotEnemy = forwardRef<BotEnemyHandle, BotEnemyProps>(
       >
         <CapsuleCollider args={[0.55, 0.45]} friction={0.5} restitution={0} />
         <group ref={meshRef} visible={alive}>
-          <mesh position={[0, 0.2, 0]} castShadow>
-            <capsuleGeometry args={[0.45, 1.1, 6, 10]} />
-            <meshStandardMaterial color="#4b5f72" roughness={0.82} />
-          </mesh>
-          <mesh position={[0, 1.1, 0]} castShadow>
-            <boxGeometry args={[0.7, 0.38, 0.55]} />
-            <meshStandardMaterial color="#202631" roughness={0.75} />
-          </mesh>
-          <mesh position={[0, 0.68, -0.45]} castShadow>
-            <boxGeometry args={[0.35, 0.18, 0.75]} />
-            <meshStandardMaterial color="#7a2d2d" roughness={0.7} />
-          </mesh>
+          <BotModel src={modelPaths.bot} botId={config.id} />
         </group>
       </RigidBody>
     );
