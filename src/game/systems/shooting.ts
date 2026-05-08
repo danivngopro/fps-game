@@ -1,4 +1,4 @@
-import { Camera, Raycaster, Vector2, type Object3D } from "three";
+import { Camera, Raycaster, Vector3, type Object3D } from "three";
 import type { RaycastHit, WeaponConfig } from "../types";
 
 export class ShootingSystem {
@@ -20,6 +20,7 @@ export class ShootingSystem {
     camera: Camera,
     weapon: WeaponConfig,
     targets: Array<{ id: string; mesh: Object3D }>,
+    spread: number,
   ): RaycastHit | null {
     if (!this.canShoot(weapon)) return null;
 
@@ -27,7 +28,25 @@ export class ShootingSystem {
 
     // Create ray from camera center
     this.raycaster.far = weapon.range;
-    this.raycaster.setFromCamera(new Vector2(0, 0), camera);
+    const origin = new Vector3();
+    const direction = new Vector3();
+    const right = new Vector3();
+    const up = new Vector3();
+
+    camera.getWorldPosition(origin);
+    camera.getWorldDirection(direction);
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    up.setFromMatrixColumn(camera.matrixWorld, 1);
+
+    if (spread > 0) {
+      const spreadX = (Math.random() - 0.5) * spread;
+      const spreadY = (Math.random() - 0.5) * spread;
+      direction.addScaledVector(right, spreadX);
+      direction.addScaledVector(up, spreadY);
+      direction.normalize();
+    }
+
+    this.raycaster.set(origin, direction);
 
     // Check for hits
     const intersects = this.raycaster.intersectObjects(

@@ -1,11 +1,21 @@
 import { useGameStore } from "../store";
 
 export function HUD() {
-  const { health, maxHealth, ammo, maxAmmo, kills, score, gameStarted } =
-    useGameStore();
+  const {
+    health,
+    maxHealth,
+    ammo,
+    magazineSize,
+    reserveAmmo,
+    kills,
+    score,
+    gameStarted,
+    isReloading,
+    isAiming,
+  } = useGameStore();
 
   const healthPercent = (health / maxHealth) * 100;
-  const ammoPercent = (ammo / maxAmmo) * 100;
+  const ammoPercent = (ammo / magazineSize) * 100;
 
   return (
     <div
@@ -21,7 +31,6 @@ export function HUD() {
         textShadow: "0 0 10px rgba(0, 255, 0, 0.5)",
       }}
     >
-      {/* Top left: Game info */}
       <div
         style={{
           position: "fixed",
@@ -35,18 +44,20 @@ export function HUD() {
         <div>SCORE: {score}</div>
       </div>
 
-      {/* Bottom left: Ammo */}
       <div
         style={{
           position: "fixed",
-          bottom: "100px",
+          bottom: "96px",
           left: "20px",
           fontSize: "16px",
+          lineHeight: 1.35,
         }}
       >
         <div>
-          AMMO: {ammo} / {maxAmmo}
+          {isReloading ? "RELOADING" : "AMMO"}: {ammo} / {magazineSize}
         </div>
+        <div>RESERVE: {reserveAmmo}</div>
+        <div>{isAiming ? "ADS" : "HIP FIRE"}</div>
         <div
           style={{
             width: "150px",
@@ -68,7 +79,6 @@ export function HUD() {
         </div>
       </div>
 
-      {/* Bottom center: Health */}
       <div
         style={{
           position: "fixed",
@@ -103,7 +113,6 @@ export function HUD() {
         </div>
       </div>
 
-      {/* Instruction text */}
       {!gameStarted && (
         <div
           style={{
@@ -119,7 +128,7 @@ export function HUD() {
         >
           <div>CLICK TO PLAY</div>
           <div style={{ fontSize: "18px", marginTop: "20px" }}>
-            WASD to move • SPACE to jump • Click to shoot
+            WASD move | SPACE jump | CTRL crouch | RMB aim | LMB shoot | R reload
           </div>
         </div>
       )}

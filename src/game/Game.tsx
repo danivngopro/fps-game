@@ -4,6 +4,7 @@ import { TargetDummy } from "./components/TargetDummy";
 import { PlayerController } from "./components/PlayerController";
 import { useGameStore } from "./store";
 import { mapConfig } from "./config/map";
+import { defaultWeapon } from "./config/weapons";
 import type { TargetDummyHandle } from "./components/TargetDummy";
 import type { RaycastHit } from "./types";
 
@@ -33,7 +34,7 @@ export function Game() {
 
     return refs;
   }, []);
-  const { addKill, addScore } = useGameStore();
+  const { addKill, addScore, setShowHitMarker } = useGameStore();
 
   // Handle target death and respawn
   const handleTargetDeath = useCallback(
@@ -61,16 +62,16 @@ export function Game() {
     if (hit.targetId) {
       const targetRef = targetRefs.get(hit.targetId);
       if (targetRef?.current) {
-        targetRef.current.takeDamage(25);
+        targetRef.current.takeDamage(defaultWeapon.damage);
       }
     }
 
     // Show hit marker
-    useGameStore.setState({ showHitMarker: true });
+    setShowHitMarker(true);
     setTimeout(() => {
-      useGameStore.setState({ showHitMarker: false });
+      setShowHitMarker(false);
     }, 100);
-  }, [targetRefs]);
+  }, [setShowHitMarker, targetRefs]);
 
   // Get alive targets for rendering
   const aliveTargets = targets.filter((target) => target.alive);

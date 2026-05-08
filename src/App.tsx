@@ -3,13 +3,14 @@ import { Physics } from "@react-three/rapier";
 import { Game } from "./game/Game";
 import { HUD } from "./game/components/HUD";
 import { Crosshair } from "./game/components/Crosshair";
+import { playerConfig } from "./game/config/player";
 import "./App.css";
 
 function App() {
   return (
     <div className="app-container">
       <Canvas
-        camera={{ position: [0, 5, 0], fov: 75 }}
+        camera={{ position: [0, 5, 0], fov: playerConfig.baseFov }}
         style={{
           width: "100vw",
           height: "100vh",

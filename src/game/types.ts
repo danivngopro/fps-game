@@ -2,8 +2,15 @@ export interface WeaponConfig {
   name: string;
   damage: number;
   fireRate: number; // milliseconds between shots
-  maxAmmo: number;
+  magazineSize: number;
+  reserveAmmo: number;
+  reloadTime: number;
+  hipFireSpread: number;
+  adsSpread: number;
   range: number; // max raycast distance
+  adsFov: number;
+  adsMouseSensitivityMultiplier: number;
+  adsMoveSpeedMultiplier: number;
 }
 
 export type Vector3Tuple = [number, number, number];
@@ -19,6 +26,9 @@ export interface InputState {
   left: boolean;
   right: boolean;
   jump: boolean;
+  crouch: boolean;
+  aim: boolean;
+  reload: boolean;
   shoot: boolean;
   pointerLocked: boolean;
 }
@@ -38,7 +48,11 @@ export interface GameState {
   health: number;
   maxHealth: number;
   ammo: number;
-  maxAmmo: number;
+  magazineSize: number;
+  reserveAmmo: number;
+  isReloading: boolean;
+  isAiming: boolean;
+  weaponCooldown: number;
   gameStarted: boolean;
 }
 

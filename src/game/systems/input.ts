@@ -7,6 +7,9 @@ export class InputManager {
     left: false,
     right: false,
     jump: false,
+    crouch: false,
+    aim: false,
+    reload: false,
     shoot: false,
     pointerLocked: false,
   };
@@ -20,6 +23,8 @@ export class InputManager {
   private readonly handleMouseUpBound = (e: MouseEvent) =>
     this.handleMouseUp(e);
   private readonly handlePointerLockBound = () => this.handlePointerLock();
+  private readonly handleContextMenuBound = (e: MouseEvent) =>
+    e.preventDefault();
 
   constructor() {
     this.setupListeners();
@@ -31,6 +36,7 @@ export class InputManager {
     document.addEventListener("mousedown", this.handleMouseDownBound);
     document.addEventListener("mouseup", this.handleMouseUpBound);
     document.addEventListener("pointerlockchange", this.handlePointerLockBound);
+    document.addEventListener("contextmenu", this.handleContextMenuBound);
   }
 
   private handleKeyDown(e: KeyboardEvent) {
@@ -39,6 +45,8 @@ export class InputManager {
     if (key === "s") this.state.backward = true;
     if (key === "a") this.state.left = true;
     if (key === "d") this.state.right = true;
+    if (key === "control") this.state.crouch = true;
+    if (key === "r") this.state.reload = true;
     if (key === " ") {
       this.state.jump = true;
       e.preventDefault();
@@ -51,15 +59,19 @@ export class InputManager {
     if (key === "s") this.state.backward = false;
     if (key === "a") this.state.left = false;
     if (key === "d") this.state.right = false;
+    if (key === "control") this.state.crouch = false;
+    if (key === "r") this.state.reload = false;
     if (key === " ") this.state.jump = false;
   }
 
   private handleMouseDown(e: MouseEvent) {
     if (e.button === 0) this.state.shoot = true; // left click
+    if (e.button === 2) this.state.aim = true;
   }
 
   private handleMouseUp(e: MouseEvent) {
     if (e.button === 0) this.state.shoot = false;
+    if (e.button === 2) this.state.aim = false;
   }
 
   private handlePointerLock() {
@@ -91,5 +103,6 @@ export class InputManager {
       "pointerlockchange",
       this.handlePointerLockBound,
     );
+    document.removeEventListener("contextmenu", this.handleContextMenuBound);
   }
 }

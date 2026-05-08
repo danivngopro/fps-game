@@ -15,6 +15,7 @@ export function Map() {
           args={[mapConfig.floorSize, mapConfig.floorSize]}
           rotation={[-Math.PI / 2, 0, 0]}
           position={[0, mapConfig.floorHeight, 0]}
+          userData={{ ground: true }}
         >
           <meshStandardMaterial color="#5a5a5a" />
         </Plane>
@@ -26,6 +27,7 @@ export function Map() {
           <Box
             args={wall.size}
             position={wall.position}
+            userData={{ ground: true }}
             castShadow
             receiveShadow
           >

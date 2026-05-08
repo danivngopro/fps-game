@@ -2,6 +2,11 @@ import { useGameStore } from "../store";
 
 export function Crosshair() {
   const showHitMarker = useGameStore((state) => state.showHitMarker);
+  const isAiming = useGameStore((state) => state.isAiming);
+  const isReloading = useGameStore((state) => state.isReloading);
+  const lineOffset = isAiming ? 9 : 13;
+  const lineLength = isAiming ? 8 : 12;
+
   return (
     <div
       style={{
@@ -33,24 +38,24 @@ export function Crosshair() {
       <div
         style={{
           position: "absolute",
-          width: "12px",
+          width: `${lineLength}px`,
           height: "1px",
           background: "rgba(0, 255, 0, 0.5)",
           top: "50%",
           left: "50%",
-          transform: "translateX(-50%)",
+          transform: `translateX(${lineOffset}px)`,
           transformOrigin: "left center",
         }}
       />
       <div
         style={{
           position: "absolute",
-          width: "12px",
+          width: `${lineLength}px`,
           height: "1px",
           background: "rgba(0, 255, 0, 0.5)",
           top: "50%",
           right: "50%",
-          transform: "translateX(50%)",
+          transform: `translateX(-${lineOffset}px)`,
           transformOrigin: "right center",
         }}
       />
@@ -58,11 +63,11 @@ export function Crosshair() {
         style={{
           position: "absolute",
           width: "1px",
-          height: "12px",
+          height: `${lineLength}px`,
           background: "rgba(0, 255, 0, 0.5)",
           left: "50%",
           top: "50%",
-          transform: "translateY(-50%)",
+          transform: `translateY(${lineOffset}px)`,
           transformOrigin: "center top",
         }}
       />
@@ -70,11 +75,11 @@ export function Crosshair() {
         style={{
           position: "absolute",
           width: "1px",
-          height: "12px",
+          height: `${lineLength}px`,
           background: "rgba(0, 255, 0, 0.5)",
           left: "50%",
           bottom: "50%",
-          transform: "translateY(50%)",
+          transform: `translateY(-${lineOffset}px)`,
           transformOrigin: "center bottom",
         }}
       />
@@ -94,6 +99,25 @@ export function Crosshair() {
             animation: "ping 0.1s ease-out",
           }}
         />
+      )}
+
+      {isReloading && (
+        <div
+          style={{
+            position: "absolute",
+            top: "38px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            color: "rgba(0, 255, 0, 0.75)",
+            fontFamily: "Arial, sans-serif",
+            fontSize: "11px",
+            fontWeight: "bold",
+            letterSpacing: 0,
+            whiteSpace: "nowrap",
+          }}
+        >
+          RELOAD
+        </div>
       )}
 
       <style>{`
