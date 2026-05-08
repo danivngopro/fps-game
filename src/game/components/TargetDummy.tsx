@@ -27,19 +27,21 @@ export const TargetDummy = forwardRef<TargetDummyHandle, TargetDummyProps>(
   ({ id, position, maxHp, onDeath, onHit }, ref) => {
     const meshRef = useRef<THREE.Mesh>(null);
     const aliveRef = useRef(true);
+    const hpRef = useRef(maxHp);
+    const hitFlashTimeRef = useRef(0);
     const [hp, setHp] = useState(maxHp);
-    const [hitFlashTime, setHitFlashTime] = useState(0);
 
     // Expose methods via ref
     useImperativeHandle(ref, () => ({
       takeDamage: (damage: number) => {
         if (!aliveRef.current) return;
 
-        setHitFlashTime(0.1);
+        hitFlashTimeRef.current = 0.1;
         onHit(damage);
 
         setHp((currentHp) => {
           const newHp = Math.max(0, currentHp - damage);
+          hpRef.current = newHp;
 
           if (newHp <= 0) {
             aliveRef.current = false;
@@ -49,29 +51,35 @@ export const TargetDummy = forwardRef<TargetDummyHandle, TargetDummyProps>(
           return newHp;
         });
       },
-      getHp: () => hp,
+      getHp: () => hpRef.current,
     }));
 
     // Make target hittable
     useEffect(() => {
       aliveRef.current = true;
+      hpRef.current = maxHp;
       setHp(maxHp);
     }, [maxHp]);
 
     useEffect(() => {
       if (meshRef.current) {
-        meshRef.current.userData = { targetId: id };
+        meshRef.current.userData = {
+          targetId: id,
+          shootable: true,
+          objectType: "target",
+          surfaceType: "target",
+        };
       }
     }, [id]);
 
     // Flash color when hit
-    useFrame(() => {
-      if (meshRef.current && hitFlashTime > 0) {
-        const intensity = hitFlashTime / 0.1;
+    useFrame((_, delta) => {
+      if (meshRef.current && hitFlashTimeRef.current > 0) {
+        const intensity = hitFlashTimeRef.current / 0.1;
         const material = meshRef.current.material as THREE.MeshStandardMaterial;
         material.emissive = new THREE.Color(1, 0.3, 0.3);
         material.emissiveIntensity = intensity * 0.5;
-        setHitFlashTime((t) => Math.max(0, t - 0.016));
+        hitFlashTimeRef.current = Math.max(0, hitFlashTimeRef.current - delta);
       } else if (meshRef.current) {
         const material = meshRef.current.material as THREE.MeshStandardMaterial;
         material.emissive = new THREE.Color(0, 0, 0);

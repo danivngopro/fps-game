@@ -3,6 +3,7 @@ import { Physics } from "@react-three/rapier";
 import { Game } from "./game/Game";
 import { HUD } from "./game/components/HUD";
 import { Crosshair } from "./game/components/Crosshair";
+import { DebugOverlay } from "./game/components/DebugOverlay";
 import { playerConfig } from "./game/config/player";
 import "./App.css";
 
@@ -30,6 +31,7 @@ function App() {
       {/* Render UI outside of canvas */}
       <HUD />
       <Crosshair />
+      <DebugOverlay />
     </div>
   );
 }

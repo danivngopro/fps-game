@@ -1,3 +1,5 @@
+import type * as THREE from "three";
+
 export interface WeaponConfig {
   name: string;
   damage: number;
@@ -14,10 +16,51 @@ export interface WeaponConfig {
 }
 
 export type Vector3Tuple = [number, number, number];
+export type EulerTuple = [number, number, number];
+export type SurfaceType = "sand" | "stone" | "concrete" | "wood" | "metal" | "target";
+export type ShootableObjectType = "target" | "environment";
 
-export interface WallConfig {
+export interface MapBoxConfig {
+  id: string;
   position: Vector3Tuple;
   size: Vector3Tuple;
+  color: string;
+  surfaceType: SurfaceType;
+  rotation?: EulerTuple;
+  walkable?: boolean;
+  shootable?: boolean;
+}
+
+export interface MapRampConfig extends MapBoxConfig {
+  rotation: EulerTuple;
+}
+
+export interface DecorativeObjectConfig {
+  id: string;
+  position: Vector3Tuple;
+  surfaceType: SurfaceType;
+  kind: "palm";
+}
+
+export interface MapBounds {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+}
+
+export interface MapConfig {
+  floors: MapBoxConfig[];
+  walls: MapBoxConfig[];
+  buildings: MapBoxConfig[];
+  crates: MapBoxConfig[];
+  ramps: MapRampConfig[];
+  cover: MapBoxConfig[];
+  decorations: DecorativeObjectConfig[];
+  targetDummySpawns: Vector3Tuple[];
+  playerSpawn: Vector3Tuple;
+  outOfBoundsY: number;
+  mapBounds: MapBounds;
 }
 
 export interface InputState {
@@ -57,7 +100,35 @@ export interface GameState {
 }
 
 export interface RaycastHit {
-  point: [number, number, number];
+  point: Vector3Tuple;
+  normal: Vector3Tuple;
   distance: number;
+  objectType: ShootableObjectType;
   targetId?: string;
+  materialType?: SurfaceType;
+}
+
+export interface ShootableObject {
+  id: string;
+  object: THREE.Object3D;
+  objectType: ShootableObjectType;
+  targetId?: string;
+  surfaceType: SurfaceType;
+}
+
+export interface BulletImpactData {
+  id: number;
+  point: Vector3Tuple;
+  normal: Vector3Tuple;
+  surfaceType: SurfaceType;
+}
+
+export interface DebugSnapshot {
+  speed: number;
+  grounded: boolean;
+  bunnyhopGraceActive: boolean;
+  crouched: boolean;
+  fps: number;
+  position: Vector3Tuple;
+  velocity: Vector3Tuple;
 }

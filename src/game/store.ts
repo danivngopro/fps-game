@@ -1,13 +1,16 @@
 import { create } from "zustand";
-import type { GameState } from "./types";
+import type { DebugSnapshot, GameState } from "./types";
 import { defaultWeapon } from "./config/weapons";
 
 interface GameStore extends GameState {
-  // Actions
   showHitMarker: boolean;
   showMuzzleFlash: boolean;
+  debugVisible: boolean;
+  debug: DebugSnapshot;
   setShowHitMarker: (show: boolean) => void;
   setShowMuzzleFlash: (show: boolean) => void;
+  toggleDebug: () => void;
+  setDebug: (debug: DebugSnapshot) => void;
   addKill: () => void;
   addScore: (points: number) => void;
   damagePlayer: (amount: number) => void;
@@ -36,13 +39,27 @@ const initialState: GameState = {
   gameStarted: false,
 };
 
+const initialDebug: DebugSnapshot = {
+  speed: 0,
+  grounded: false,
+  bunnyhopGraceActive: false,
+  crouched: false,
+  fps: 0,
+  position: [0, 0, 0],
+  velocity: [0, 0, 0],
+};
+
 export const useGameStore = create<GameStore>((set) => ({
   ...initialState,
   showHitMarker: false,
   showMuzzleFlash: false,
+  debugVisible: false,
+  debug: initialDebug,
 
   setShowHitMarker: (show: boolean) => set({ showHitMarker: show }),
   setShowMuzzleFlash: (show: boolean) => set({ showMuzzleFlash: show }),
+  toggleDebug: () => set((state) => ({ debugVisible: !state.debugVisible })),
+  setDebug: (debug: DebugSnapshot) => set({ debug }),
 
   addKill: () => set((state) => ({ kills: state.kills + 1 })),
 
@@ -77,13 +94,8 @@ export const useGameStore = create<GameStore>((set) => ({
 
   completeReload: () =>
     set((state) => {
-      if (state.reserveAmmo <= 0 && defaultWeapon.reserveAmmo > 0) {
-        return { isReloading: false };
-      }
-
       const needed = state.magazineSize - state.ammo;
-      const refillAmount =
-        state.reserveAmmo > 0 ? Math.min(needed, state.reserveAmmo) : needed;
+      const refillAmount = Math.min(needed, state.reserveAmmo);
 
       return {
         ammo: state.ammo + refillAmount,
@@ -94,5 +106,11 @@ export const useGameStore = create<GameStore>((set) => ({
 
   startGame: () => set({ gameStarted: true }),
 
-  resetGame: () => set(initialState),
+  resetGame: () =>
+    set({
+      ...initialState,
+      showHitMarker: false,
+      showMuzzleFlash: false,
+      debug: initialDebug,
+    }),
 }));

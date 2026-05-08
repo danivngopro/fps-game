@@ -1,12 +1,21 @@
-import { createRef, useMemo, useState, useCallback } from "react";
+import {
+  createRef,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { Map as ArenaMap } from "./components/Map";
 import { TargetDummy } from "./components/TargetDummy";
 import { PlayerController } from "./components/PlayerController";
+import { BulletImpacts } from "./components/BulletImpact";
 import { useGameStore } from "./store";
 import { mapConfig } from "./config/map";
 import { defaultWeapon } from "./config/weapons";
+import { gameAudio } from "./systems/audio";
 import type { TargetDummyHandle } from "./components/TargetDummy";
-import type { RaycastHit } from "./types";
+import type { BulletImpactData, RaycastHit } from "./types";
 
 interface TargetInstance {
   id: string;
@@ -15,6 +24,8 @@ interface TargetInstance {
 }
 
 export function Game() {
+  const nextImpactIdRef = useRef(1);
+  const [bulletImpacts, setBulletImpacts] = useState<BulletImpactData[]>([]);
   const [targets, setTargets] = useState<TargetInstance[]>(() =>
     mapConfig.targetDummySpawns.map((_, idx) => ({
       id: `target-${idx}`,
@@ -25,7 +36,7 @@ export function Game() {
   const targetRefs = useMemo(() => {
     const refs = new globalThis.Map<
       string,
-      React.RefObject<TargetDummyHandle | null>
+      RefObject<TargetDummyHandle | null>
     >();
 
     mapConfig.targetDummySpawns.forEach((_, idx) => {
@@ -36,51 +47,64 @@ export function Game() {
   }, []);
   const { addKill, addScore, setShowHitMarker } = useGameStore();
 
-  // Handle target death and respawn
   const handleTargetDeath = useCallback(
     (targetId: string) => {
       addKill();
       addScore(100);
 
-      // Respawn after delay
-      setTimeout(() => {
+      setTargets((prev) =>
+        prev.map((target) =>
+          target.id === targetId ? { ...target, alive: false } : target,
+        ),
+      );
+
+      window.setTimeout(() => {
         setTargets((prev) =>
-          prev.map((t) => (t.id === targetId ? { ...t, alive: true } : t)),
+          prev.map((target) =>
+            target.id === targetId ? { ...target, alive: true } : target,
+          ),
         );
       }, 2000);
-
-      setTargets((prev) =>
-        prev.map((t) => (t.id === targetId ? { ...t, alive: false } : t)),
-      );
     },
     [addKill, addScore],
   );
 
-  // Handle shot
-  const handleShot = useCallback((hit: RaycastHit) => {
-    // Deal damage to the target
-    if (hit.targetId) {
-      const targetRef = targetRefs.get(hit.targetId);
-      if (targetRef?.current) {
-        targetRef.current.takeDamage(defaultWeapon.damage);
+  const handleShot = useCallback(
+    (hit: RaycastHit) => {
+      if (hit.objectType === "target" && hit.targetId) {
+        const targetRef = targetRefs.get(hit.targetId);
+        targetRef?.current?.takeDamage(defaultWeapon.damage);
+        gameAudio.play("targetHit");
+        setShowHitMarker(true);
+        window.setTimeout(() => setShowHitMarker(false), 100);
+        return;
       }
-    }
 
-    // Show hit marker
-    setShowHitMarker(true);
-    setTimeout(() => {
-      setShowHitMarker(false);
-    }, 100);
-  }, [setShowHitMarker, targetRefs]);
+      setBulletImpacts((current) => {
+        const next = [
+          ...current,
+          {
+            id: nextImpactIdRef.current,
+            point: hit.point,
+            normal: hit.normal,
+            surfaceType: hit.materialType ?? "concrete",
+          },
+        ];
 
-  // Get alive targets for rendering
+        nextImpactIdRef.current += 1;
+        return next.slice(-100);
+      });
+    },
+    [setShowHitMarker, targetRefs],
+  );
+
   const aliveTargets = targets.filter((target) => target.alive);
 
   return (
     <>
       <ArenaMap />
+      <BulletImpacts impacts={bulletImpacts} />
 
-      {/* Render alive targets */}
       {aliveTargets.map((target) => (
         <TargetDummy
           key={target.id}
@@ -93,13 +117,8 @@ export function Game() {
         />
       ))}
 
-      {/* Player controller and camera */}
-      <PlayerController
-        onShot={handleShot}
-        targetRefs={targetRefs}
-      />
+      <PlayerController onShot={handleShot} targetRefs={targetRefs} />
 
-      {/* Lighting */}
       <ambientLight intensity={0.6} />
       <directionalLight
         position={[50, 50, 50]}

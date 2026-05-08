@@ -1,4 +1,5 @@
 import type { InputState } from "../types";
+import { useGameStore } from "../store";
 
 export class InputManager {
   private state: InputState = {
@@ -41,6 +42,10 @@ export class InputManager {
 
   private handleKeyDown(e: KeyboardEvent) {
     const key = e.key.toLowerCase();
+    if (key === "f3" && !e.repeat) {
+      e.preventDefault();
+      useGameStore.getState().toggleDebug();
+    }
     if (key === "w") this.state.forward = true;
     if (key === "s") this.state.backward = true;
     if (key === "a") this.state.left = true;

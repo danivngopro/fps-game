@@ -1,33 +1,27 @@
-import { Camera, Raycaster, Vector3, type Object3D } from "three";
-import type { RaycastHit, WeaponConfig } from "../types";
+import { Camera, Matrix3, Raycaster, Vector3 } from "three";
+import type { RaycastHit, ShootableObject, WeaponConfig } from "../types";
+
+const fallbackNormal = new Vector3(0, 1, 0);
 
 export class ShootingSystem {
-  private raycaster: Raycaster;
-  private lastShotTime: number = 0;
-  private hitMarkerTime: number = 0;
-  private showHitMarker: boolean = false;
-
-  constructor() {
-    this.raycaster = new Raycaster();
-  }
+  private readonly raycaster = new Raycaster();
+  private lastShotTime = 0;
 
   public canShoot(weapon: WeaponConfig): boolean {
-    const now = Date.now();
+    const now = performance.now();
     return now - this.lastShotTime >= weapon.fireRate;
   }
 
   public shoot(
     camera: Camera,
     weapon: WeaponConfig,
-    targets: Array<{ id: string; mesh: Object3D }>,
+    shootables: ShootableObject[],
     spread: number,
   ): RaycastHit | null {
     if (!this.canShoot(weapon)) return null;
 
-    this.lastShotTime = Date.now();
+    this.lastShotTime = performance.now();
 
-    // Create ray from camera center
-    this.raycaster.far = weapon.range;
     const origin = new Vector3();
     const direction = new Vector3();
     const right = new Vector3();
@@ -39,49 +33,46 @@ export class ShootingSystem {
     up.setFromMatrixColumn(camera.matrixWorld, 1);
 
     if (spread > 0) {
-      const spreadX = (Math.random() - 0.5) * spread;
-      const spreadY = (Math.random() - 0.5) * spread;
-      direction.addScaledVector(right, spreadX);
-      direction.addScaledVector(up, spreadY);
+      direction.addScaledVector(right, (Math.random() - 0.5) * spread);
+      direction.addScaledVector(up, (Math.random() - 0.5) * spread);
       direction.normalize();
     }
 
+    this.raycaster.far = weapon.range;
     this.raycaster.set(origin, direction);
 
-    // Check for hits
+    const objectToShootable = new Map(
+      shootables.map((shootable) => [shootable.object, shootable]),
+    );
     const intersects = this.raycaster.intersectObjects(
-      targets.map((t) => t.mesh),
+      shootables.map((shootable) => shootable.object),
       false,
     );
 
-    if (intersects.length > 0) {
-      const hit = intersects[0];
-      this.showHitMarker = true;
-      this.hitMarkerTime = Date.now();
+    for (const intersect of intersects) {
+      const shootable = objectToShootable.get(intersect.object);
+      if (!shootable) continue;
+
+      const localNormal = intersect.face?.normal ?? fallbackNormal;
+      const normal = localNormal
+        .clone()
+        .applyMatrix3(new Matrix3().getNormalMatrix(intersect.object.matrixWorld))
+        .normalize();
+
       return {
-        point: hit.point.toArray() as [number, number, number],
-        distance: hit.distance,
-        targetId:
-          typeof hit.object.userData.targetId === "string"
-            ? hit.object.userData.targetId
-            : undefined,
+        point: intersect.point.toArray() as [number, number, number],
+        normal: normal.toArray() as [number, number, number],
+        distance: intersect.distance,
+        objectType: shootable.objectType,
+        targetId: shootable.targetId,
+        materialType: shootable.surfaceType,
       };
     }
 
     return null;
   }
 
-  public isHitMarkerVisible(): boolean {
-    if (!this.showHitMarker) return false;
-    if (Date.now() - this.hitMarkerTime > 100) {
-      this.showHitMarker = false;
-      return false;
-    }
-    return true;
-  }
-
   public reset() {
     this.lastShotTime = 0;
-    this.showHitMarker = false;
   }
 }
